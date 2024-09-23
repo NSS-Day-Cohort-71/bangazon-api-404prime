@@ -17,7 +17,7 @@ from .order import OrderSerializer
 class Profile(ViewSet):
     """Request handlers for user profile info in the Bangazon Platform"""
     permission_classes = (IsAuthenticatedOrReadOnly,)
-
+    
     def list(self, request):
         """
         @api {GET} /profile GET user profile info
@@ -81,16 +81,28 @@ class Profile(ViewSet):
             }
         """
         try:
-            current_user = Customer.objects.get(user=4)
+            # Get the authenticated user
+            user = request.auth.user
+            if not user:
+                return Response({'message': 'User profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+            # Get the customer associated with the user
+            current_user = Customer.objects.get(user=request.auth.user)
             current_user.recommends = Recommendation.objects.filter(recommender=current_user)
 
-            serializer = ProfileSerializer(
-                current_user, many=False, context={'request': request})
-
+            serializer = ProfileSerializer(current_user, many=False, context={'request': request})
             return Response(serializer.data)
+        
+        except Customer.DoesNotExist:
+            return Response({
+                'message': f'Customer profile not found for user {user.username} (id: {user.id}).',
+                'error': 'CustomerDoesNotExist'
+                }, status=status.HTTP_404_NOT_FOUND)
         except Exception as ex:
-            return HttpResponseServerError(ex)
-
+            return Response({
+                'message': str(ex),
+                'error': type(ex).__name__
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     @action(methods=['get', 'post', 'delete'], detail=False)
     def cart(self, request):
         """Shopping cart manipulation"""
@@ -371,6 +383,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     """
     user = UserSerializer(many=False)
     recommends = RecommenderSerializer(many=True)
+    
 
     class Meta:
         model = Customer
