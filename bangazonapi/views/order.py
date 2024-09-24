@@ -151,3 +151,27 @@ class Orders(ViewSet):
         json_orders = OrderSerializer(orders, many=True, context={"request": request})
 
         return Response(json_orders.data)
+
+    @action(methods=["put"], detail=True)
+    def complete(self, request, pk=None):
+        """
+        Custom action to complete an order by assigning a payment type
+        """
+        customer = Customer.objects.get(user=request.auth.user)
+        try:
+            order = Order.objects.get(pk=pk, customer=customer)
+            order.payment_type = Payment.objects.get(
+                pk=request.data["payment_type"]
+            )  # add payment type to order
+            order.completed_date = datetime.now()  # Mark the order as completed
+            order.save()
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+        except Order.DoesNotExist:
+            return Response(
+                {"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Payment.DoesNotExist:
+            return Response(
+                {"message": "Payment type not found"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )

@@ -12,3 +12,4 @@ class Order(models.Model):
     )
     payment_type = models.ForeignKey(Payment, on_delete=models.DO_NOTHING, null=True)
     created_date = models.DateField(auto_now_add=True)
+    completed_date = models.DateTimeField(null=True, blank=True)
