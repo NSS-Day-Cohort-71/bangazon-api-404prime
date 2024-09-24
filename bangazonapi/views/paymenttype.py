@@ -58,10 +58,12 @@ class Payments(ViewSet):
         try:
             payment_type = Payment.objects.get(pk=pk)
             serializer = PaymentSerializer(payment_type, context={"request": request})
+            payment_type = Payment.objects.get(pk=pk)             # Get the payment_type by its id
+            serializer = PaymentSerializer(
+                payment_type, context={'request': request})
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
-
     def destroy(self, request, pk=None):
         """Handle DELETE requests for a single payment type
 
