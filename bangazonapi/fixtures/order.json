@@ -1,92 +1,102 @@
 [
     {
+        "model": "bangazonapi.order",
         "pk": 1,
-        "model": "bangazonapi.order",
         "fields": {
-            "customer_id": 5,
+            "customer": 5,
+            "payment_type": 1,
             "created_date": "2019-08-16",
-            "payment_type_id": 1
+            "completed_date": null
         }
     },
     {
+        "model": "bangazonapi.order",
         "pk": 2,
-        "model": "bangazonapi.order",
         "fields": {
-            "customer_id": 7,
+            "customer": 7,
+            "payment_type": null,
             "created_date": "2019-04-12",
-            "payment_type_id": null
+            "completed_date": null
         }
     },
     {
+        "model": "bangazonapi.order",
         "pk": 3,
-        "model": "bangazonapi.order",
         "fields": {
-            "customer_id": 5,
+            "customer": 5,
+            "payment_type": 1,
             "created_date": "2019-03-26",
-            "payment_type_id": 1
+            "completed_date": "2019-03-27T12:00:00Z"
         }
     },
     {
+        "model": "bangazonapi.order",
         "pk": 4,
-        "model": "bangazonapi.order",
         "fields": {
-            "customer_id": 6,
+            "customer": 6,
+            "payment_type": 2,
             "created_date": "2019-01-16",
-            "payment_type_id": 2
+            "completed_date": "2019-01-17T14:30:00Z"
         }
     },
     {
+        "model": "bangazonapi.order",
         "pk": 5,
-        "model": "bangazonapi.order",
         "fields": {
-            "customer_id": 6,
+            "customer": 6,
+            "payment_type": 2,
             "created_date": "2019-05-22",
-            "payment_type_id": 2
+            "completed_date": null
         }
     },
     {
+        "model": "bangazonapi.order",
         "pk": 6,
-        "model": "bangazonapi.order",
         "fields": {
-            "customer_id": 5,
+            "customer": 5,
+            "payment_type": 1,
             "created_date": "2019-07-01",
-            "payment_type_id": 1
+            "completed_date": "2019-07-02T10:15:00Z"
         }
     },
     {
+        "model": "bangazonapi.order",
         "pk": 7,
-        "model": "bangazonapi.order",
         "fields": {
-            "customer_id": 6,
+            "customer": 6,
+            "payment_type": 2,
             "created_date": "2019-05-27",
-            "payment_type_id": 2
+            "completed_date": "2019-05-28T16:45:00Z"
         }
     },
     {
+        "model": "bangazonapi.order",
         "pk": 8,
-        "model": "bangazonapi.order",
         "fields": {
-            "customer_id": 5,
+            "customer": 5,
+            "payment_type": null,
             "created_date": "2019-03-14",
-            "payment_type_id": null
+            "completed_date": "2019-03-15T09:30:00Z"
         }
     },
     {
+        "model": "bangazonapi.order",
         "pk": 9,
-        "model": "bangazonapi.order",
         "fields": {
-            "customer_id": 6,
+            "customer": 6,
+            "payment_type": null,
             "created_date": "2018-12-08",
-            "payment_type_id": null
+            "completed_date": "2018-12-09T11:20:00Z"
         }
     },
     {
-        "pk": 10,
         "model": "bangazonapi.order",
+        "pk": 10,
         "fields": {
-            "customer_id": 4,
+            "customer": 4,
+            "payment_type": null,
             "created_date": "2018-11-03",
-            "payment_type_id": null
+            "completed_date": null
         }
     }
 ]
