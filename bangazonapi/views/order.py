@@ -28,15 +28,35 @@ class OrderLineItemSerializer(serializers.HyperlinkedModelSerializer):
         depth = 1
 
 
+class PaymentSerializer(serializers.HyperlinkedModelSerializer):
+    """JSON serializer for payment types"""
+
+    class Meta:
+        model = Payment
+        url = serializers.HyperlinkedIdentityField(
+            view_name="payment", lookup_field="id"
+        )
+        fields = ("id", "merchant_name", "account_number", "expiration_date")
+
+
 class OrderSerializer(serializers.HyperlinkedModelSerializer):
     """JSON serializer for customer orders"""
 
     lineitems = OrderLineItemSerializer(many=True)
+    payment_type = PaymentSerializer(many=False)
 
     class Meta:
         model = Order
         url = serializers.HyperlinkedIdentityField(view_name="order", lookup_field="id")
-        fields = ("id", "url", "created_date", "payment_type", "customer", "lineitems")
+        fields = (
+            "id",
+            "url",
+            "created_date",
+            "payment_type",
+            "customer",
+            "lineitems",
+            "completed_date",
+        )
 
 
 class Orders(ViewSet):
@@ -139,6 +159,7 @@ class Orders(ViewSet):
                     "created_date": "2019-08-16",
                     "payment_type": "http://localhost:8000/paymenttypes/1",
                     "customer": "http://localhost:8000/customers/5"
+                    "completed_date": "2019-08-16"
                 }
             ]
         """
