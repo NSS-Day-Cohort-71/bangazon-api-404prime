@@ -125,3 +125,12 @@ class Cart(ViewSet):
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
         return Response(final["order"])
+    
+    def clear_cart(self, request, order_id):
+        current_user = Customer.objects.get(user=request.auth.user)
+        try:
+            open_order = Order.objects.get(customer=current_user, payment_type=None)
+            OrderProduct.objects.filter(order=open_order).delete()
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+        except Order.DoesNotExist as ex:
+            return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
