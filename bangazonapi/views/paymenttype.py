@@ -39,8 +39,9 @@ class Payments(ViewSet):
             Response -- JSON serialized payment instance
         """
         new_payment = Payment()
-        new_payment.merchant_name = request.data["merchant"]
-        new_payment.account_number = request.data["acctNumber"]
+        new_payment.merchant_name = request.data["merchant_name"]
+        new_payment.account_number = request.data["account_number"]
+        new_payment.expiration_date = request.data["expiration_date"]
         customer = Customer.objects.get(user=request.auth.user)
         new_payment.customer = customer
         new_payment.save()
@@ -58,12 +59,12 @@ class Payments(ViewSet):
         try:
             payment_type = Payment.objects.get(pk=pk)
             serializer = PaymentSerializer(payment_type, context={"request": request})
-            payment_type = Payment.objects.get(pk=pk)             # Get the payment_type by its id
-            serializer = PaymentSerializer(
-                payment_type, context={'request': request})
+            payment_type = Payment.objects.get(pk=pk)  # Get the payment_type by its id
+            serializer = PaymentSerializer(payment_type, context={"request": request})
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
+
     def destroy(self, request, pk=None):
         """Handle DELETE requests for a single payment type
 
