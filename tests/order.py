@@ -1,7 +1,7 @@
 import json
 from rest_framework import status
 from rest_framework.test import APITestCase
-from datetime import datetime
+from django.utils import timezone
 
 
 class OrderTests(APITestCase):
@@ -101,6 +101,13 @@ class OrderTests(APITestCase):
         # Add product
         self.test_add_product_to_order()
 
+        # Get the order ID
+        url = "/orders"
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
+        response = self.client.get(url, None, format="json")
+        json_response = json.loads(response.content)
+        order_id = json_response[0]["id"]
+
         # Add payment type
         url = "/paymenttypes"
         data = {
@@ -116,13 +123,13 @@ class OrderTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Complete order
-        url = "/orders"
-        completed_date = datetime.now().isoformat()
+        url = f"/orders/{order_id}/complete"
+        completed_date = timezone.now().isoformat()
         data = {"payment_type": 1, "completed_date": completed_date}
         self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
-        response = self.client.post(url, data, format="json")
+        response = self.client.put(url, data, format="json")
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         # Get order and verify it was completed
         url = "/orders/1"
