@@ -6,6 +6,8 @@ from .customer import Customer
 from .productcategory import ProductCategory
 from .orderproduct import OrderProduct
 from .productrating import ProductRating
+from django.contrib.auth.models import User
+from .store import Store
 
 
 class Product(SafeDeleteModel):
@@ -30,6 +32,10 @@ class Product(SafeDeleteModel):
     category = models.ForeignKey(
         ProductCategory, on_delete=models.DO_NOTHING, related_name="products"
     )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="products", null=True
+    )
+
     location = models.CharField(
         max_length=50,
     )
@@ -39,6 +45,9 @@ class Product(SafeDeleteModel):
         width_field=None,
         max_length=None,
         null=True,
+    )
+    store = models.ForeignKey(
+        Store, on_delete=models.CASCADE, related_name="products", null=True
     )
 
     @property
