@@ -10,6 +10,7 @@ from rest_framework.decorators import action
 from bangazonapi.models import Order, Payment, Customer, Product, OrderProduct
 from .product import ProductSerializer
 from datetime import datetime
+from django.shortcuts import render
 
 
 class OrderLineItemSerializer(serializers.HyperlinkedModelSerializer):
@@ -197,3 +198,5 @@ class Orders(ViewSet):
                 {"message": "Payment type not found"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+    # moved incomplete_orders to reports.py
