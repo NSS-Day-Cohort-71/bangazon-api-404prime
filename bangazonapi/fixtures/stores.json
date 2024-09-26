@@ -1,0 +1,29 @@
+[
+  {
+    "model": "bangazonapi.store",
+    "pk": 1,
+    "fields": {
+      "name": "Tech Emporium",
+      "description": "Your one-stop shop for all things tech.",
+      "seller": 6
+    }
+  },
+  {
+    "model": "bangazonapi.store",
+    "pk": 2,
+    "fields": {
+      "name": "Home Comforts",
+      "description": "Comfortable and affordable furniture and decor.",
+      "seller": 5
+    }
+  },
+  {
+    "model": "bangazonapi.store",
+    "pk": 3,
+    "fields": {
+      "name": "Gourmet Delights",
+      "description": "Exclusive gourmet food items from around the world.",
+      "seller": 4
+    }
+  }
+]
