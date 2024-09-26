@@ -198,5 +198,16 @@ class Orders(ViewSet):
                 {"message": "Payment type not found"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-    # moved incomplete_orders to reports.py
+    
+    @action(methods=["delete"], detail=True)
+    def clear_cart(self, request, pk=None):
+        """
+        Custom action to clear all line items in the cart (open order)
+        """
+        current_user = Customer.objects.get(user=request.auth.user)
+        try:
+            open_order = Order.objects.get(pk=pk, customer=current_user, payment_type=None)
+            OrderProduct.objects.filter(order=open_order).delete()
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+        except Order.DoesNotExist:
+            return Response({"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
