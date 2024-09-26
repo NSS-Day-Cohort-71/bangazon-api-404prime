@@ -1,5 +1,6 @@
 from django.db import models
 from .customer import Customer  # Assuming Customer is the seller
+from django.contrib.auth.models import User
 
 
 class Store(models.Model):
