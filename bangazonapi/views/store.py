@@ -11,7 +11,7 @@ class StoreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Store
-        fields = ['id', 'name', 'description', 'seller']
+        fields = ['id', 'name', 'description', 'seller', 'items_for_sale']
 
 
 class StoreViewSet(viewsets.ModelViewSet):
