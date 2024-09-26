@@ -2366,8 +2366,7 @@
       "created_date": "2023-03-14",
       "category_id": 1,
       "location": "Workshop",
-      "image_path": "products/tools.png",
-      "store": 3
+      "image_path": "products/tools.png"
     }
   },
   {
@@ -2382,8 +2381,7 @@
       "created_date": "2023-03-14",
       "category_id": 1,
       "location": "Workshop",
-      "image_path": "products/tools.png",
-      "store": 2
+      "image_path": "products/tools.png"
     }
   },
   {
@@ -2398,8 +2396,7 @@
       "created_date": "2023-03-14",
       "category_id": 1,
       "location": "Workshop",
-      "image_path": "products/tools.png",
-      "store": 1
+      "image_path": "products/tools.png"
     }
   }
 ]
