@@ -292,7 +292,7 @@ class Profile(ViewSet):
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    @action(methods=["get", "post"], detail=False)
+    @action(methods=["get", "post", "delete"], detail=False)
     def favoritesellers(self, request):
 
         if request.method == "GET":
@@ -354,7 +354,7 @@ class Profile(ViewSet):
             )
             return Response(serializer.data)
 
-        if request.method == "POST":
+        elif request.method == "POST":
             """
             @api {POST} /profile/favoritesellers POST new favorite seller
             @apiName AddFavoriteSeller
@@ -415,6 +415,52 @@ class Profile(ViewSet):
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
                 return Response(serializer.data, status=status.HTTP_200_OK)
+
+        elif request.method == "DELETE":
+            """
+            @api {DELETE} /profile/favoritesellers DELETE favorite seller
+            @apiName RemoveFavoriteSeller
+            @apiGroup UserProfile
+
+            @apiHeader {String} Authorization Auth token
+            @apiHeaderExample {String} Authorization
+                Token 9ba45f09651c5b0c404f37a2d2572c026c146611
+
+            @apiParam {Number} favorite_id ID of the favorite to remove
+
+            @apiSuccess (204) {Object} null No content, successful deletion
+
+            @apiError (404) {Object} error Error message if favorite not found
+            @apiError (400) {Object} error Error message if favorite_id is missing
+            @apiError (403) {Object} error Error message if user doesn't have permission
+            """
+            favorite_id = request.data.get("favorite_id")
+
+            if not favorite_id:
+                return Response(
+                    {"error": "favorite_id is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                favorite = Favorite.objects.get(pk=favorite_id)
+
+                # Check if the authenticated user owns this favorite
+                if favorite.customer.user != request.auth.user:
+                    return Response(
+                        {"error": "You do not have permission to delete this favorite"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+
+                favorite.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except Favorite.DoesNotExist:
+                return Response(
+                    {"error": "Favorite not found"}, status=status.HTTP_404_NOT_FOUND
+                )
+
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class LineItemSerializer(serializers.HyperlinkedModelSerializer):
