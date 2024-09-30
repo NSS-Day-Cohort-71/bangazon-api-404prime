@@ -4,10 +4,14 @@ from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
 from bangazonapi.models import Customer
+from .user import UserSerializer
 
 
 class CustomerSerializer(serializers.HyperlinkedModelSerializer):
     """JSON serializer for customers"""
+
+    user = UserSerializer()
+
     class Meta:
         model = Customer
         url = serializers.HyperlinkedIdentityField(
