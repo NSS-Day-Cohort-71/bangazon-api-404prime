@@ -13,12 +13,13 @@ from bangazonapi.models import Product, Customer, ProductCategory
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 from .customer import CustomerSerializer
+from .store import StoreSerializer
 
 
 class ProductSerializer(serializers.ModelSerializer):
     """JSON serializer for products"""
 
-    customer = CustomerSerializer()
+    store = StoreSerializer()
 
     class Meta:
         model = Product
@@ -34,9 +35,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "image_path",
             "average_rating",
             "can_be_rated",
-            "customer",
+            "store",
         )
-        read_only_fields = ['customer']
         depth = 1
 
 
