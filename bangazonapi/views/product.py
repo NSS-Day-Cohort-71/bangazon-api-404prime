@@ -37,7 +37,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "can_be_rated",
             "store",
         )
-        depth = 1
 
 
 class Products(ViewSet):
