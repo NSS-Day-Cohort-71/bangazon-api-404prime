@@ -426,24 +426,24 @@ class Profile(ViewSet):
             @apiHeaderExample {String} Authorization
                 Token 9ba45f09651c5b0c404f37a2d2572c026c146611
 
-            @apiParam {Number} store_id ID of the favorite to remove
+            @apiParam {Number} favorite_id ID of the favorite to remove
 
             @apiSuccess (204) {Object} null No content, successful deletion
 
             @apiError (404) {Object} error Error message if favorite not found
-            @apiError (400) {Object} error Error message if store_id is missing
+            @apiError (400) {Object} error Error message if favorite_id is missing
             @apiError (403) {Object} error Error message if user doesn't have permission
             """
-            store_id = request.data.get("store_id")
+            favorite_id = request.data.get("favorite_id")
 
-            if not store_id:
+            if not favorite_id:
                 return Response(
-                    {"error": "store_id is required"},
+                    {"error": "favorite_id is required"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
             try:
-                favorite = Favorite.objects.get(pk=store_id)
+                favorite = Favorite.objects.get(pk=favorite_id)
 
                 # Check if the authenticated user owns this favorite
                 if favorite.customer.user != request.auth.user:
