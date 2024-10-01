@@ -121,15 +121,10 @@ class ProductTests(APITestCase):
         json_response = json.loads(response.content)
 
         # store product id
-        product_type_id = json_response['id']
-        self.assertIn('id', json_response)
-
-        # self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        # self.assertEqual(json_response['name'], 'Kite')
-        # self.assertEqual(json_response['description'], 'It flies high')
+        product_id = json_response['id']
 
         # send delete request
-        delete_url = f'{url}/{product_type_id}'
+        delete_url = f'{url}/{product_id}'
         delete_response = self.client.delete(delete_url)
 
         # check response status
