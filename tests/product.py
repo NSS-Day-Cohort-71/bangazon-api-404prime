@@ -10,8 +10,15 @@ class ProductTests(APITestCase):
         Create a new account and create sample category
         """
         url = "/register"
-        data = {"username": "steve", "password": "Admin8*", "email": "steve@stevebrownlee.com",
-                "address": "100 Infinity Way", "phone_number": "555-1212", "first_name": "Steve", "last_name": "Brownlee"}
+        data = {
+            "username": "steve",
+            "password": "Admin8*",
+            "email": "steve@stevebrownlee.com",
+            "address": "100 Infinity Way",
+            "phone_number": "555-1212",
+            "first_name": "Steve",
+            "last_name": "Brownlee",
+        }
         response = self.client.post(url, data, format='json')
         json_response = json.loads(response.content)
         self.token = json_response["token"]
@@ -38,7 +45,7 @@ class ProductTests(APITestCase):
             "quantity": 60,
             "description": "It flies high",
             "category_id": 1,
-            "location": "Pittsburgh"
+            "location": "Pittsburgh",
         }
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
         response = self.client.post(url, data, format='json')
@@ -65,7 +72,7 @@ class ProductTests(APITestCase):
             "description": "It flies very high",
             "category_id": 1,
             "created_date": datetime.date.today(),
-            "location": "Pittsburgh"
+            "location": "Pittsburgh",
         }
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
         response = self.client.put(url, data, format='json')
@@ -96,5 +103,42 @@ class ProductTests(APITestCase):
         self.assertEqual(len(json_response), 3)
 
     # TODO: Delete product
+    def test_delete_product(self):
+        # create a product
+        url = "/products"
+        data = {
+            "name": "Kite",
+            "price": 14.99,
+            "quantity": 60,
+            "description": "It flies high",
+            "category_id": 1,
+            "location": "Pittsburgh",
+        }
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+
+        # delete the product that was created
+        response = self.client.post(url, data, format='json')
+        json_response = json.loads(response.content)
+
+        # store product id
+        product_type_id = json_response['id']
+        self.assertIn('id', json_response)
+
+        # self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # self.assertEqual(json_response['name'], 'Kite')
+        # self.assertEqual(json_response['description'], 'It flies high')
+
+        # send delete request
+        delete_url = f'{url}/{product_type_id}'
+        delete_response = self.client.delete(delete_url)
+
+        # check response status
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # retrieve deleted product
+        get_response = self.client.get(delete_url)
+
+        # verify it was deleted with a 404 status code
+        self.assertEqual(get_response.status_code, status.HTTP_404_NOT_FOUND)
 
     # TODO: Product can be rated. Assert average rating exists.
