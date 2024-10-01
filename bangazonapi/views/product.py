@@ -111,6 +111,7 @@ class Products(ViewSet):
         customer = Customer.objects.get(user=request.auth.user)
         new_product.customer = customer
 
+        # Assign the product category
         product_category = ProductCategory.objects.get(pk=request.data["category_id"])
         new_product.category = product_category
 
@@ -201,6 +202,7 @@ class Products(ViewSet):
         customer = Customer.objects.get(user=request.auth.user)
         product.customer = customer
 
+        # Assign the product category
         product_category = ProductCategory.objects.get(pk=request.data["category_id"])
         product.category = product_category
         product.save()
@@ -246,7 +248,6 @@ class Products(ViewSet):
             [
                 {
                     "id": 101,
-                    "url": "http://localhost:8000/products/101",
                     "name": "Kite",
                     "price": 14.99,
                     "number_sold": 0,
@@ -260,60 +261,79 @@ class Products(ViewSet):
                         "url": "http://localhost:8000/productcategories/6",
                         "name": "Games/Toys"
                     }
+                },
+                {
+                    "id": 102,
+                    "name": "Basketball",
+                    "price": 29.99,
+                    "number_sold": 5,
+                    "description": "A great outdoor game",
+                    "quantity": 30,
+                    "created_date": "2019-10-23",
+                    "location": "Chicago",
+                    "image_path": null,
+                    "average_rating": 4.5,
+                    "category": {
+                        "url": "http://localhost:8000/productcategories/6",
+                        "name": "Games/Toys"
+                    }
                 }
             ]
         """
         products = Product.objects.all()
 
-        # Support filtering by category and/or quantity
-        category = self.request.query_params.get("category", None)
-        quantity = self.request.query_params.get("quantity", None)
-        order = self.request.query_params.get("order_by", None)
-        direction = self.request.query_params.get("direction", None)
-        number_sold = self.request.query_params.get("number_sold", None)
-        average_rating = self.request.query_params.get("average_rating", None)
+        # Filtering
+        category_id = request.query_params.get("category_id", None)
+        min_price = request.query_params.get("min_price", None)
+        max_price = request.query_params.get("max_price", None)
+        quantity = request.query_params.get("quantity", None)
+        number_sold = request.query_params.get("number_sold", None)
 
-        if order is not None:
-            order_filter = order
+        if category_id:
+            products = products.filter(category_id=category_id)
 
-            if direction is not None:
-                if direction == "desc":
-                    order_filter = f"-{order}"
+        if min_price:
+            products = products.filter(price__gte=min_price)
 
-            products = products.order_by(order_filter)
+        if max_price:
+            products = products.filter(price__lte=max_price)
 
-        if category is not None:
-            products = products.filter(category__id=category)
+        if quantity:
+            products = products.filter(quantity__gte=quantity)
 
-        if quantity is not None:
-            products = products.order_by("-created_date")[: int(quantity)]
+        if number_sold:
+            products = products.filter(number_sold__gte=number_sold)
 
-        if number_sold is not None:
+        serializer = ProductSerializer(products, many=True, context={"request": request})
 
-            def sold_filter(product):
-                if product.number_sold <= int(number_sold):
-                    return True
-                return False
-
-            products = filter(sold_filter, products)
-
-        serializer = ProductSerializer(
-            products, many=True, context={"request": request}
-        )
         return Response(serializer.data)
 
     @action(methods=["post"], detail=True)
     def recommend(self, request, pk=None):
-        """Recommend products to other users"""
+        """
+        @api {POST} /products/:id/recommend POST new recommendation
+        @apiName RecommendProduct
+        @apiGroup Product
 
-        if request.method == "POST":
-            rec = Recommendation()
-            rec.recommender = Customer.objects.get(user=request.auth.user)
-            rec.customer = Customer.objects.get(user__id=request.data["recipient"])
-            rec.product = Product.objects.get(pk=pk)
+        @apiParam {id} id Product Id to recommend
+        @apiParam {Number} recipient_id User Id of recipient
 
-            rec.save()
+        @apiSuccess (200) {Object} recommendation Created recommendation
+        @apiSuccess (200) {id} recommendation.id Recommendation Id
+        @apiSuccess (200) {id} recommendation.product_id Product Id
+        @apiSuccess (200) {id} recommendation.recipient_id Recipient Id
+        @apiSuccessExample {json} Success
+            {
+                "id": 1,
+                "product_id": 101,
+                "recipient_id": 2
+            }
+        """
+        product = Product.objects.get(pk=pk)
 
-            return Response(None, status=status.HTTP_204_NO_CONTENT)
+        recommendation = Recommendation()
+        recommendation.product = product
+        recommendation.recipient_id = request.data["recipient_id"]
+        recommendation.save()
 
-        return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return Response({}, status=status.HTTP_201_CREATED)
