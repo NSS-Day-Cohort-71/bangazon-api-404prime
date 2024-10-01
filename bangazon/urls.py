@@ -13,7 +13,7 @@ router.register(r"productcategories", ProductCategories, "productcategory")
 router.register(r"lineitems", LineItems, "orderproduct")
 router.register(r"customers", Customers, "customer")
 router.register(r"users", Users, "user")
-router.register(r"orders", Orders, basename='order')
+router.register(r"orders", Orders, basename="order")
 router.register(r"cart", Cart, "cart")
 router.register(r"paymenttypes", Payments, "payment")
 router.register(r"profile", Profile, "profile")
@@ -27,5 +27,21 @@ urlpatterns = [
     path("login", login_user),
     path("api-token-auth", obtain_auth_token),
     path("api-auth", include("rest_framework.urls", namespace="rest_framework")),
-    path("reports/orders", reports.incomplete_orders_report, name="incomplete_orders"),
+    # Reports URLs
+    path(
+        "reports/",
+        include(
+            [
+                path(
+                    "orders", reports.incomplete_orders_report, name="incomplete_orders"
+                ),
+                path(
+                    "expensiveproducts",
+                    reports.expensive_products_report,
+                    name="expensive_products",
+                ),
+                # Add more report URLs here as needed
+            ]
+        ),
+    ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
