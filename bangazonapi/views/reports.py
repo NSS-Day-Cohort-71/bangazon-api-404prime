@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from bangazonapi.models import Order
+from bangazonapi.models import Order, Product
 
 
 def incomplete_orders_report(request):
@@ -37,4 +37,24 @@ def incomplete_orders_report(request):
         request,
         "reports/orders/incomplete_orders.html",
         {"orders_data": orders_data},
+    )
+
+
+def expensive_products_report(request):
+
+    PRICE_THRESHOLD = 1000
+
+    # "gte" = greater than or equal to
+    expensive_products = Product.objects.filter(price__gte=PRICE_THRESHOLD)
+
+    products_data = []
+    for product in expensive_products:
+        products_data.append(
+            {"product_id": product.id, "name": product.name, "price": product.price}
+        )
+
+    return render(
+        request,
+        "reports/products/expensive_products.html",
+        {"products_data": products_data},
     )

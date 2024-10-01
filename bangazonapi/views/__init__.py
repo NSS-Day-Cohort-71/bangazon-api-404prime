@@ -10,4 +10,4 @@ from .customer import Customers
 from .user import Users
 from .profile import Profile
 from .store import StoreViewSet
-from .reports import incomplete_orders_report
+from .reports import incomplete_orders_report, expensive_products_report
