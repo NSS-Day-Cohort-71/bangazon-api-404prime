@@ -290,6 +290,7 @@ class Products(ViewSet):
         max_price = request.query_params.get("max_price", None)
         quantity = request.query_params.get("quantity", None)
         number_sold = request.query_params.get("number_sold", None)
+        location = request.query_params.get("location", None)
 
         if category_id:
             products = products.filter(category_id=category_id)
@@ -305,6 +306,9 @@ class Products(ViewSet):
 
         if number_sold:
             products = products.filter(number_sold__gte=number_sold)
+
+        if location:
+            products = products.filter(location__icontains=location)
 
         serializer = ProductSerializer(
             products, many=True, context={"request": request}
