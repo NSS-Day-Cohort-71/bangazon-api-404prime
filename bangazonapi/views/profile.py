@@ -19,6 +19,7 @@ from bangazonapi.models import (
 )
 from .product import ProductSerializer
 from .order import OrderSerializer
+from .store import StoreSerializer
 
 
 class Profile(ViewSet):
@@ -538,6 +539,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     user = UserSerializer(many=False)
     recommends = RecommenderSerializer(many=True)
+    stores = StoreSerializer(many=True, read_only=True)
 
     class Meta:
         model = Customer
@@ -549,6 +551,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "address",
             "payment_types",
             "recommends",
+            "stores",
         )
         depth = 1
 
