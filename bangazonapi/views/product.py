@@ -312,9 +312,9 @@ class Products(ViewSet):
             products = products.filter(location__icontains=location)
 
         # Sorting based on direction
-        if direction == "desc":
+        if direction == "asc":
             products = products.order_by("price")
-        elif direction == "asc":
+        elif direction == "desc":
             products = products.order_by("-price")
 
         serializer = ProductSerializer(
