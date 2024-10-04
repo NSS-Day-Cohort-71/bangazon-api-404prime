@@ -291,6 +291,7 @@ class Products(ViewSet):
         quantity = request.query_params.get("quantity", None)
         number_sold = request.query_params.get("number_sold", None)
         location = request.query_params.get("location", None)
+        direction = request.query_params.get("direction", None)
 
         if category_id:
             products = products.filter(category_id=category_id)
@@ -309,6 +310,12 @@ class Products(ViewSet):
 
         if location:
             products = products.filter(location__icontains=location)
+
+        # Sorting based on direction
+        if direction == "desc":
+            products = products.order_by("price")
+        elif direction == "asc":
+            products = products.order_by("-price")
 
         serializer = ProductSerializer(
             products, many=True, context={"request": request}
