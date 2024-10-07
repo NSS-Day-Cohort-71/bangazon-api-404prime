@@ -14,6 +14,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 from .customer import CustomerSerializer
 from .store import StoreSerializer
+from django.db.models import Count, Q
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -245,6 +246,13 @@ class Products(ViewSet):
         @apiName ListProducts
         @apiGroup Product
 
+        @apiParam {Number} store_id (Optional) Filter products by store ID
+        @apiParam {Number} category_id (Optional) Filter products by category ID
+        @apiParam {Number} min_price (Optional) Filter products by minimum price
+        @apiParam {Number} max_price (Optional) Filter products by maximum price
+        @apiParam {Number} quantity (Optional) Filter products by minimum quantity
+        @apiParam {Number} number_sold (Optional) Filter products by minimum number sold
+
         @apiSuccess (200) {Object[]} products Array of products
         @apiSuccessExample {json} Success
             [
@@ -262,29 +270,19 @@ class Products(ViewSet):
                     "category": {
                         "url": "http://localhost:8000/productcategories/6",
                         "name": "Games/Toys"
+                    },
+                    "store": {
+                        "id": 1,
+                        "name": "My Store"
                     }
                 },
-                {
-                    "id": 102,
-                    "name": "Basketball",
-                    "price": 29.99,
-                    "number_sold": 5,
-                    "description": "A great outdoor game",
-                    "quantity": 30,
-                    "created_date": "2019-10-23",
-                    "location": "Chicago",
-                    "image_path": null,
-                    "average_rating": 4.5,
-                    "category": {
-                        "url": "http://localhost:8000/productcategories/6",
-                        "name": "Games/Toys"
-                    }
-                }
+                # ... more products
             ]
         """
         products = Product.objects.all()
 
         # Filtering
+        store_id = request.query_params.get("store_id", None)
         category_id = request.query_params.get("category_id", None)
         min_price = request.query_params.get("min_price", None)
         max_price = request.query_params.get("max_price", None)
@@ -292,6 +290,18 @@ class Products(ViewSet):
         number_sold = request.query_params.get("number_sold", None)
         location = request.query_params.get("location", None)
         direction = request.query_params.get("direction", None)
+        sold_only = request.query_params.get("sold_only", "false").lower() == "true"
+
+        if store_id:
+            products = products.filter(store__id=store_id)
+
+        if sold_only:
+            products = products.annotate(
+                orders_count=Count(
+                    "lineitems",
+                    filter=Q(lineitems__order__payment_type__isnull=False),
+                )
+            ).filter(orders_count__gt=0)
 
         if category_id:
             products = products.filter(category_id=category_id)
