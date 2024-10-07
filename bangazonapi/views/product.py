@@ -333,25 +333,6 @@ class Products(ViewSet):
 
         return Response(serializer.data)
 
-    @action(methods=["get"], detail=False)
-    def sold_count(self, request):
-        store_id = request.query_params.get("store_id", None)
-
-        if not store_id:
-            return Response(
-                {"error": "store_id is required"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        sold_count = (
-            Product.objects.filter(
-                store__id=store_id, orderproduct__order__payment_type__isnull=False
-            )
-            .distinct()
-            .count()
-        )
-
-        return Response({"sold_count": sold_count})
-
     @action(methods=["post"], detail=True)
     def recommend(self, request, pk=None):
         """
