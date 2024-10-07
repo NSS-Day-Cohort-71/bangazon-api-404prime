@@ -298,8 +298,8 @@ class Products(ViewSet):
         if sold_only:
             products = products.annotate(
                 orders_count=Count(
-                    "orderproduct",
-                    filter=Q(orderproduct__order__payment_type__isnull=False),
+                    "lineitems",
+                    filter=Q(lineitems__order__payment_type__isnull=False),
                 )
             ).filter(orders_count__gt=0)
 
