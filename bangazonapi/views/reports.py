@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from bangazonapi.models import Order, Product
+from django.db import connection
 
 
 def incomplete_orders_report(request):
@@ -37,6 +38,42 @@ def incomplete_orders_report(request):
         request,
         "reports/orders/incomplete_orders.html",
         {"orders_data": orders_data},
+    )
+
+
+def completed_orders_report(request):
+    status = request.GET.get('status', None)
+    if status != 'complete':
+        return render(
+            request, 'reports/orders/completed_orders.html', {'orders_data': []}
+        )
+
+    orders = Order.objects.filter(
+        payment_type__isnull=False, completed_date__isnull=False
+    )
+
+    orders_data = []
+    for order in orders:
+        total_cost = sum(item.product.price for item in order.lineitems.all())
+
+        customer_name = order.customer.user.username
+
+        orders_data.append(
+            {
+                'order_id': order.id,
+                'customer_name': customer_name,
+                'total_cost': total_cost,
+                'payment_type': {
+                    'merchant_name': order.payment_type.merchant_name,
+                    'account_number': order.payment_type.account_number,
+                    'expiration_date': order.payment_type.expiration_date,
+                },
+            }
+        )
+    return render(
+        request,
+        'reports/orders/completed_orders.html',
+        {'orders_data': orders_data},
     )
 
 

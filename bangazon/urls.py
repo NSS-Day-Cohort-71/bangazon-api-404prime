@@ -33,12 +33,19 @@ urlpatterns = [
         include(
             [
                 path(
-                    "orders", reports.incomplete_orders_report, name="incomplete_orders"
+                    "incomplete_orders",
+                    reports.incomplete_orders_report,
+                    name="incomplete_orders",
                 ),
                 path(
                     "expensiveproducts",
                     reports.expensive_products_report,
                     name="expensive_products",
+                ),
+                path(
+                    'completed_orders',
+                    reports.completed_orders_report,
+                    name='completed_orders',
                 ),
                 # Add more report URLs here as needed
             ]
