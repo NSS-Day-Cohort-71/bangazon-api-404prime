@@ -142,3 +142,57 @@ class OrderTests(APITestCase):
         self.assertIsNotNone(json_response["payment_type"])
 
     # TODO: New line item is not added to closed order
+
+def test_prevent_add_to_closed_order(self):
+    """
+    Ensure we cannot add a product to a closed order.
+    """
+    # Add product
+    self.test_add_product_to_order()
+
+    # Get the order ID
+    url = "/orders"
+    self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
+    response = self.client.get(url, None, format="json")
+    json_response = json.loads(response.content)
+    order_id = json_response[0]["id"]
+
+    # Get the initial line items for the order
+    url = f"/orders/{order_id}/lineitems"
+    self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
+    response = self.client.get(url, None, format="json")
+    initial_line_items = json.loads(response.content)
+
+    # Complete order
+    url = f"/orders/{order_id}/complete"
+    completed_date = timezone.now().isoformat()
+    data = {"payment_type": 1, "completed_date": completed_date}
+    self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
+    response = self.client.put(url, data, format="json")
+
+    self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    # Attempt to add new line item to the closed order
+    url = f"/orders/{order_id}/lineitems"
+    data = {"product_id": 2}  # Replace with the ID of the product you want to add
+    self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
+    response = self.client.post(url, data, format="json")
+
+    self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)  # Verify that the request fails
+
+    # Verify that the order's line items have not changed
+    url = f"/orders/{order_id}/lineitems"
+    self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
+    response = self.client.get(url, None, format="json")
+    updated_line_items = json.loads(response.content)
+
+    self.assertEqual(initial_line_items, updated_line_items)  # Verify that the line items are the same
+
+    # Verify that the order is still closed
+    url = f"/orders/{order_id}"
+    self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
+    response = self.client.get(url, None, format="json")
+    json_response = json.loads(response.content)
+
+    self.assertEqual(response.status_code, status.HTTP_200_OK)
+    self.assertEqual(json_response["status"], "closed")
