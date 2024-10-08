@@ -14,4 +14,5 @@ from .reports import (
     incomplete_orders_report,
     expensive_products_report,
     completed_orders_report,
+    inexpensive_products_report,
 )
