@@ -6,6 +6,7 @@ from .product import Product
 from .productcategory import ProductCategory
 from .recommendation import Recommendation
 from .rating import Rating
-from .favorite import Favorite
+from .favoriteseller import Favorite
 from .productrating import ProductRating
 from .store import Store
+from .favoriteproduct import FavoriteProduct

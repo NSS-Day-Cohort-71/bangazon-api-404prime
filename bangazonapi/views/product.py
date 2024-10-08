@@ -2,6 +2,7 @@
 
 from rest_framework.decorators import action
 from bangazonapi.models.recommendation import Recommendation
+from bangazonapi.models import FavoriteProduct
 import base64
 from django.core.files.base import ContentFile
 from django.http import HttpResponseServerError
@@ -362,3 +363,55 @@ class Products(ViewSet):
         recommendation.save()
 
         return Response({}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='like', url_name='like')
+    def like_product(self, request, pk=None):
+        try:
+            # Fetch the product using pk (primary key)
+            product = Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            return Response(
+                {'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Check if the user is authenticated and has already liked this product
+        if FavoriteProduct.objects.filter(user=request.user, product=product).exists():
+            return Response(
+                {'status': 'Product already liked'}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create a new favorite entry if not already liked
+        FavoriteProduct.objects.create(user=request.user, product=product)
+
+        return Response({'status': 'Product liked'}, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'], url_path='liked', url_name='liked')
+    def list_favorites(self, request):
+        user = request.user.id
+
+        favorites = FavoriteProduct.objects.filter(user=user).select_related('product')
+
+        favorite_products = [favorite.product for favorite in favorites]
+
+        serializer = ProductSerializer(
+            favorite_products, many=True, context={'request': request}
+        )
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['delete'], url_path='unlike', url_name='unlike')
+    def delete_favorite(self, request, pk=None):
+
+        try:
+            favorite_to_delete = FavoriteProduct.objects.get(pk=pk)
+            favorite_to_delete.delete()
+
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+
+        except FavoriteProduct.DoesNotExist as ex:
+            return Response({"message": ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as ex:
+            return Response(
+                {"message": ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
