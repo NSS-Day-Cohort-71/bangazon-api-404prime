@@ -47,6 +47,11 @@ urlpatterns = [
                     reports.completed_orders_report,
                     name='completed_orders',
                 ),
+                path(
+                    'inexpensive_products',
+                    reports.inexpensive_products_report,
+                    name='inexpensive_products',
+                ),
                 # Add more report URLs here as needed
             ]
         ),

@@ -95,3 +95,19 @@ def expensive_products_report(request):
         "reports/products/expensive_products.html",
         {"products_data": products_data},
     )
+
+def inexpensive_products_report(request):
+    # "lte" = less than or equal to
+    inexpensive_products = Product.objects.filter(price__lte=999)
+
+    products_data = []
+    for product in inexpensive_products:
+        products_data.append(
+            {"product_id": product.id, "name": product.name, "price": product.price}
+        )
+
+    return render(
+        request,
+        "reports/products/inexpensive_products.html",
+        {"products_data": products_data},
+    )
