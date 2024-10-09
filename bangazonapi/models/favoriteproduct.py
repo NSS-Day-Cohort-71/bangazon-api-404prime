@@ -4,12 +4,12 @@ from .product import Product
 
 
 class FavoriteProduct(models.Model):
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         User,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.CASCADE,
     )
     product = models.ForeignKey(
-        Product, on_delete=models.DO_NOTHING, related_name='products'
+        Product, on_delete=models.CASCADE, related_name='products'
     )
 
     class Meta:
