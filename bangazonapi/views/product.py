@@ -17,6 +17,7 @@ from .customer import CustomerSerializer
 from .store import StoreSerializer
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import User
 import logging
 
 logger = logging.getLogger(__name__)
@@ -352,21 +353,6 @@ class Products(ViewSet):
 
     @action(detail=True, methods=["post"])
     def recommend(self, request, pk=None):
-        """
-        @api {POST} /products/:id/recommend POST new recommendation
-        @apiName RecommendProduct
-        @apiGroup Product
-
-        @apiParam {id} id Product Id to recommend (in URL)
-        @apiParam {Number} recommender_id User Id of recommender
-        @apiParam {Number} recipient_id User Id of recipient
-
-        @apiSuccess (201) {Object} recommendation Created recommendation
-        @apiSuccess (201) {Number} recommendation.id Recommendation Id
-        @apiSuccess (201) {Number} recommendation.product_id Product Id
-        @apiSuccess (201) {Number} recommendation.recipient_id Recipient Id
-        @apiSuccess (201) {Number} recommendation.recommender_id Recommender Id
-        """
         logger.info(f"Recommend method called with pk: {pk}")
         logger.info(f"Request data: {request.data}")
 
@@ -383,23 +369,43 @@ class Products(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Check recommender
         try:
-            recommender = Customer.objects.get(pk=recommender_id)
-            logger.info(f"Recommender found: {recommender}")
-        except Customer.DoesNotExist:
-            logger.error(f"Recommender with id {recommender_id} not found")
+            recommender_user = User.objects.get(pk=recommender_id)
+            logger.info(f"Recommender User found: {recommender_user}")
+            recommender = Customer.objects.get(user=recommender_user)
+            logger.info(f"Recommender Customer found: {recommender}")
+        except User.DoesNotExist:
+            logger.error(f"Recommender User with id {recommender_id} not found")
             return Response(
-                {"error": f"Recommender with id {recommender_id} not found"},
+                {"error": f"Recommender User with id {recommender_id} not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Customer.DoesNotExist:
+            logger.error(f"Recommender Customer for User id {recommender_id} not found")
+            return Response(
+                {
+                    "error": f"Recommender Customer for User id {recommender_id} not found"
+                },
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        # Check recipient
         try:
-            recipient = Customer.objects.get(pk=recipient_id)
-            logger.info(f"Recipient found: {recipient}")
-        except Customer.DoesNotExist:
-            logger.error(f"Recipient with id {recipient_id} not found")
+            recipient_user = User.objects.get(pk=recipient_id)
+            logger.info(f"Recipient User found: {recipient_user}")
+            recipient = Customer.objects.get(user=recipient_user)
+            logger.info(f"Recipient Customer found: {recipient}")
+        except User.DoesNotExist:
+            logger.error(f"Recipient User with id {recipient_id} not found")
             return Response(
-                {"error": f"Recipient with id {recipient_id} not found"},
+                {"error": f"Recipient User with id {recipient_id} not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Customer.DoesNotExist:
+            logger.error(f"Recipient Customer for User id {recipient_id} not found")
+            return Response(
+                {"error": f"Recipient Customer for User id {recipient_id} not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
