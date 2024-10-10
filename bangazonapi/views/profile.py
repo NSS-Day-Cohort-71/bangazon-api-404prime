@@ -100,12 +100,15 @@ class Profile(ViewSet):
 
             # Get the customer associated with the user
             current_user = Customer.objects.get(user=request.auth.user)
+            # Get recommendations made by this user
             current_user.recommends = Recommendation.objects.filter(
                 recommender=current_user
             )
 
             serializer = ProfileSerializer(
-                current_user, many=False, context={"request": request}
+                current_user,
+                many=False,
+                context={"request": request},
             )
             return Response(serializer.data)
 
@@ -510,10 +513,7 @@ class ProfileProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = (
-            "id",
-            "name",
-        )
+        fields = ("id", "name", "price")
 
 
 class RecommenderSerializer(serializers.ModelSerializer):
@@ -530,6 +530,15 @@ class RecommenderSerializer(serializers.ModelSerializer):
         )
 
 
+class RecommendationSerializer(serializers.ModelSerializer):
+
+    product = ProfileProductSerializer()
+
+    class Meta:
+        model = Recommendation
+        fields = ("product",)
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     """JSON serializer for customer profile
 
@@ -540,6 +549,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(many=False)
     recommends = RecommenderSerializer(many=True)
     stores = StoreSerializer(many=True, read_only=True)
+    recommendations_received = serializers.SerializerMethodField()
 
     class Meta:
         model = Customer
@@ -552,8 +562,15 @@ class ProfileSerializer(serializers.ModelSerializer):
             "payment_types",
             "recommends",
             "stores",
+            "recommendations_received",
         )
         depth = 1
+
+    def get_recommendations_received(self, obj):
+        recommendations = Recommendation.objects.filter(customer=obj)
+        return RecommendationSerializer(
+            recommendations, many=True, context=self.context
+        ).data
 
 
 class FavoriteUserSerializer(serializers.HyperlinkedModelSerializer):
