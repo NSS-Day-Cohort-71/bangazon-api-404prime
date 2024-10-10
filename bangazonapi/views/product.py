@@ -401,9 +401,7 @@ class Products(ViewSet):
         # Create a new favorite entry if not already liked
         favorite = FavoriteProduct.objects.create(user=request.user, product=product)
 
-        return Response(
-            {'favorite_product_id': favorite.id}, status=status.HTTP_201_CREATED
-        )
+        return Response({}, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'], url_path='liked', url_name='liked')
     def list_favorites(self, request):
