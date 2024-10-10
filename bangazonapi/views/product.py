@@ -16,6 +16,11 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from .customer import CustomerSerializer
 from .store import StoreSerializer
 from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import User
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -43,8 +48,8 @@ class ProductSerializer(serializers.ModelSerializer):
         )
 
     def get_is_liked(self, obj):
-        request = self.context.get('request')
-        if request and hasattr(obj, '_request'):
+        request = self.context.get("request")
+        if request and hasattr(obj, "_request"):
             return obj.is_liked
         return False
 
@@ -346,44 +351,87 @@ class Products(ViewSet):
 
         return Response(serializer.data)
 
-    @action(methods=["post"], detail=True)
+    @action(detail=True, methods=["post"])
     def recommend(self, request, pk=None):
-        """
-        @api {POST} /products/:id/recommend POST new recommendation
-        @apiName RecommendProduct
-        @apiGroup Product
+        logger.info(f"Recommend method called with pk: {pk}")
+        logger.info(f"Request data: {request.data}")
 
-        @apiParam {id} id Product Id to recommend
-        @apiParam {Number} recipient_id User Id of recipient
+        product = get_object_or_404(Product, pk=pk)
+        logger.info(f"Product found: {product}")
 
-        @apiSuccess (200) {Object} recommendation Created recommendation
-        @apiSuccess (200) {id} recommendation.id Recommendation Id
-        @apiSuccess (200) {id} recommendation.product_id Product Id
-        @apiSuccess (200) {id} recommendation.recipient_id Recipient Id
-        @apiSuccessExample {json} Success
+        recommender_id = request.data.get("recommender_id")
+        recipient_id = request.data.get("recipient_id")
+        logger.info(f"Recommender ID: {recommender_id}, Recipient ID: {recipient_id}")
+
+        if not all([recommender_id, recipient_id]):
+            return Response(
+                {"error": "recommender_id and recipient_id are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check recommender
+        try:
+            recommender_user = User.objects.get(pk=recommender_id)
+            logger.info(f"Recommender User found: {recommender_user}")
+            recommender = Customer.objects.get(user=recommender_user)
+            logger.info(f"Recommender Customer found: {recommender}")
+        except User.DoesNotExist:
+            logger.error(f"Recommender User with id {recommender_id} not found")
+            return Response(
+                {"error": f"Recommender User with id {recommender_id} not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Customer.DoesNotExist:
+            logger.error(f"Recommender Customer for User id {recommender_id} not found")
+            return Response(
+                {
+                    "error": f"Recommender Customer for User id {recommender_id} not found"
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check recipient
+        try:
+            recipient_user = User.objects.get(pk=recipient_id)
+            logger.info(f"Recipient User found: {recipient_user}")
+            recipient = Customer.objects.get(user=recipient_user)
+            logger.info(f"Recipient Customer found: {recipient}")
+        except User.DoesNotExist:
+            logger.error(f"Recipient User with id {recipient_id} not found")
+            return Response(
+                {"error": f"Recipient User with id {recipient_id} not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Customer.DoesNotExist:
+            logger.error(f"Recipient Customer for User id {recipient_id} not found")
+            return Response(
+                {"error": f"Recipient Customer for User id {recipient_id} not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        recommendation = Recommendation.objects.create(
+            product=product, customer=recipient, recommender=recommender
+        )
+        logger.info(f"Recommendation created: {recommendation}")
+
+        return Response(
             {
-                "id": 1,
-                "product_id": 101,
-                "recipient_id": 2
-            }
-        """
-        product = Product.objects.get(pk=pk)
+                "id": recommendation.id,
+                "product_id": product.id,
+                "recipient_id": recipient.id,
+                "recommender_id": recommender.id,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
-        recommendation = Recommendation()
-        recommendation.product = product
-        recommendation.recipient_id = request.data["recipient_id"]
-        recommendation.save()
-
-        return Response({}, status=status.HTTP_201_CREATED)
-
-    @action(detail=True, methods=['post'], url_path='like', url_name='like')
+    @action(detail=True, methods=["post"], url_path="like", url_name="like")
     def like_product(self, request, pk=None):
         try:
             # Fetch the product using pk (primary key)
             product = Product.objects.get(pk=pk)
         except Product.DoesNotExist:
             return Response(
-                {'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND
+                {"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         # Check if the user has already liked this product
@@ -394,7 +442,7 @@ class Products(ViewSet):
         if favorite:
             # If the product is already liked, provide an option to unlike
             return Response(
-                {'status': 'Product already liked', 'favorite_id': favorite.id},
+                {"status": "Product already liked", "favorite_id": favorite.id},
                 status=status.HTTP_200_OK,
             )
 
@@ -403,21 +451,21 @@ class Products(ViewSet):
 
         return Response({}, status=status.HTTP_201_CREATED)
 
-    @action(detail=False, methods=['get'], url_path='liked', url_name='liked')
+    @action(detail=False, methods=["get"], url_path="liked", url_name="liked")
     def list_favorites(self, request):
         user = request.user.id
 
-        favorites = FavoriteProduct.objects.filter(user=user).select_related('product')
+        favorites = FavoriteProduct.objects.filter(user=user).select_related("product")
 
         favorite_products = [favorite.product for favorite in favorites]
 
         serializer = ProductSerializer(
-            favorite_products, many=True, context={'request': request}
+            favorite_products, many=True, context={"request": request}
         )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['delete'], url_path='unlike', url_name='unlike')
+    @action(detail=True, methods=["delete"], url_path="unlike", url_name="unlike")
     def delete_favorite(self, request, pk=None):
         try:
             # Get the favorite product based on the user's request
@@ -429,6 +477,6 @@ class Products(ViewSet):
 
         except FavoriteProduct.DoesNotExist:
             return Response(
-                {'error': 'Favorite product not found'},
+                {"error": "Favorite product not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
