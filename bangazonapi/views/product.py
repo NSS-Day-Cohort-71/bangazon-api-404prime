@@ -16,6 +16,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from .customer import CustomerSerializer
 from .store import StoreSerializer
 from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -43,8 +44,8 @@ class ProductSerializer(serializers.ModelSerializer):
         )
 
     def get_is_liked(self, obj):
-        request = self.context.get('request')
-        if request and hasattr(obj, '_request'):
+        request = self.context.get("request")
+        if request and hasattr(obj, "_request"):
             return obj.is_liked
         return False
 
@@ -355,35 +356,63 @@ class Products(ViewSet):
 
         @apiParam {id} id Product Id to recommend
         @apiParam {Number} recipient_id User Id of recipient
+        @apiParam {Number} recommender_id User Id of recommender
 
-        @apiSuccess (200) {Object} recommendation Created recommendation
-        @apiSuccess (200) {id} recommendation.id Recommendation Id
-        @apiSuccess (200) {id} recommendation.product_id Product Id
-        @apiSuccess (200) {id} recommendation.recipient_id Recipient Id
+        @apiSuccess (201) {Object} recommendation Created recommendation
+        @apiSuccess (201) {id} recommendation.id Recommendation Id
+        @apiSuccess (201) {id} recommendation.product_id Product Id
+        @apiSuccess (201) {id} recommendation.recipient_id Recipient Id
+        @apiSuccess (201) {id} recommendation.recommender_id Recommender Id
         @apiSuccessExample {json} Success
             {
                 "id": 1,
                 "product_id": 101,
-                "recipient_id": 2
+                "recipient_id": 2,
+                "recommender_id": 3
             }
         """
-        product = Product.objects.get(pk=pk)
+        product = get_object_or_404(Product, pk=pk)
 
-        recommendation = Recommendation()
-        recommendation.product = product
-        recommendation.recipient_id = request.data["recipient_id"]
-        recommendation.save()
+        # Validate request data
+        recipient_id = request.data.get("recipient_id")
+        recommender_id = request.data.get("recommender_id")
 
-        return Response({}, status=status.HTTP_201_CREATED)
+        if not recipient_id or not recommender_id:
+            return Response(
+                {"error": "Both recipient_id and recommender_id are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-    @action(detail=True, methods=['post'], url_path='like', url_name='like')
+        # Get or create Customer instances
+        recipient = get_object_or_404(Customer, pk=recipient_id)
+        recommender = get_object_or_404(Customer, pk=recommender_id)
+
+        # Create and save the recommendation
+        recommendation = Recommendation.objects.create(
+            product=product, customer=recipient, recommender=recommender
+        )
+
+        return Response(
+            {
+                "id": recommendation.id,
+                "product_id": product.id,
+                "recipient_id": recipient.id,
+                "recommender_id": recommender.id,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    # Currently not sending over the product id, recipient id or the sender id
+    # Currently sending {username: "brenda"}
+
+    @action(detail=True, methods=["post"], url_path="like", url_name="like")
     def like_product(self, request, pk=None):
         try:
             # Fetch the product using pk (primary key)
             product = Product.objects.get(pk=pk)
         except Product.DoesNotExist:
             return Response(
-                {'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND
+                {"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         # Check if the user has already liked this product
@@ -394,7 +423,7 @@ class Products(ViewSet):
         if favorite:
             # If the product is already liked, provide an option to unlike
             return Response(
-                {'status': 'Product already liked', 'favorite_id': favorite.id},
+                {"status": "Product already liked", "favorite_id": favorite.id},
                 status=status.HTTP_200_OK,
             )
 
@@ -403,21 +432,21 @@ class Products(ViewSet):
 
         return Response({}, status=status.HTTP_201_CREATED)
 
-    @action(detail=False, methods=['get'], url_path='liked', url_name='liked')
+    @action(detail=False, methods=["get"], url_path="liked", url_name="liked")
     def list_favorites(self, request):
         user = request.user.id
 
-        favorites = FavoriteProduct.objects.filter(user=user).select_related('product')
+        favorites = FavoriteProduct.objects.filter(user=user).select_related("product")
 
         favorite_products = [favorite.product for favorite in favorites]
 
         serializer = ProductSerializer(
-            favorite_products, many=True, context={'request': request}
+            favorite_products, many=True, context={"request": request}
         )
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['delete'], url_path='unlike', url_name='unlike')
+    @action(detail=True, methods=["delete"], url_path="unlike", url_name="unlike")
     def delete_favorite(self, request, pk=None):
         try:
             # Get the favorite product based on the user's request
@@ -429,6 +458,6 @@ class Products(ViewSet):
 
         except FavoriteProduct.DoesNotExist:
             return Response(
-                {'error': 'Favorite product not found'},
+                {"error": "Favorite product not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
