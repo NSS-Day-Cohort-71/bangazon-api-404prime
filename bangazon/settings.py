@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'bangazonapi',
     'safedelete',
+    'django_extensions',
 ]
 
 REST_FRAMEWORK = {
@@ -50,11 +51,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
-    'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.JSONRenderer',
-    ),
+    'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 10,
 }
 
 MIDDLEWARE = [
@@ -68,10 +67,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ORIGIN_WHITELIST = (
-    'http://localhost:3000',
-    'http://127.0.0.1:3000'
-)
+CORS_ORIGIN_WHITELIST = ('http://localhost:3000', 'http://127.0.0.1:3000')
 
 ROOT_URLCONF = 'bangazon.urls'
 
@@ -101,7 +97,6 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-
     }
 }
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

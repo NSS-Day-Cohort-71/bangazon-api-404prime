@@ -8,6 +8,7 @@ from .orderproduct import OrderProduct
 from .productrating import ProductRating
 from django.contrib.auth.models import User
 from .store import Store
+from .favoriteproduct import FavoriteProduct
 
 
 class Product(SafeDeleteModel):
@@ -93,6 +94,17 @@ class Product(SafeDeleteModel):
             return avg
         except ZeroDivisionError:
             return 0
+
+    @property
+    def is_liked(self):
+        if hasattr(self, '_request'):
+            return FavoriteProduct.objects.filter(
+                user=self._request.user, product=self
+            ).exists()
+        return False
+
+    def set_request(self, request):
+        self._request = request
 
     class Meta:
         verbose_name = "product"

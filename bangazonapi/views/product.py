@@ -2,6 +2,7 @@
 
 from rest_framework.decorators import action
 from bangazonapi.models.recommendation import Recommendation
+from bangazonapi.models import FavoriteProduct
 import base64
 from django.core.files.base import ContentFile
 from django.http import HttpResponseServerError
@@ -21,6 +22,7 @@ class ProductSerializer(serializers.ModelSerializer):
     """JSON serializer for products"""
 
     store = StoreSerializer()
+    is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -37,7 +39,14 @@ class ProductSerializer(serializers.ModelSerializer):
             "average_rating",
             "can_be_rated",
             "store",
+            "is_liked",
         )
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and hasattr(obj, '_request'):
+            return obj.is_liked
+        return False
 
 
 class Products(ViewSet):
@@ -173,6 +182,7 @@ class Products(ViewSet):
         """
         try:
             product = Product.objects.get(pk=pk)
+            product.set_request(request)
             serializer = ProductSerializer(product, context={"request": request})
             return Response(serializer.data)
         except Product.DoesNotExist as ex:
@@ -327,6 +337,9 @@ class Products(ViewSet):
         elif direction == "desc":
             products = products.order_by("-price")
 
+        for product in products:
+            product.set_request(request)
+
         serializer = ProductSerializer(
             products, many=True, context={"request": request}
         )
@@ -362,3 +375,60 @@ class Products(ViewSet):
         recommendation.save()
 
         return Response({}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='like', url_name='like')
+    def like_product(self, request, pk=None):
+        try:
+            # Fetch the product using pk (primary key)
+            product = Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            return Response(
+                {'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Check if the user has already liked this product
+        favorite = FavoriteProduct.objects.filter(
+            user=request.user, product=product
+        ).first()
+
+        if favorite:
+            # If the product is already liked, provide an option to unlike
+            return Response(
+                {'status': 'Product already liked', 'favorite_id': favorite.id},
+                status=status.HTTP_200_OK,
+            )
+
+        # Create a new favorite entry if not already liked
+        favorite = FavoriteProduct.objects.create(user=request.user, product=product)
+
+        return Response({}, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'], url_path='liked', url_name='liked')
+    def list_favorites(self, request):
+        user = request.user.id
+
+        favorites = FavoriteProduct.objects.filter(user=user).select_related('product')
+
+        favorite_products = [favorite.product for favorite in favorites]
+
+        serializer = ProductSerializer(
+            favorite_products, many=True, context={'request': request}
+        )
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['delete'], url_path='unlike', url_name='unlike')
+    def delete_favorite(self, request, pk=None):
+        try:
+            # Get the favorite product based on the user's request
+            favorite_to_delete = FavoriteProduct.objects.get(
+                product__id=pk, user=request.user
+            )
+            favorite_to_delete.delete()
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+
+        except FavoriteProduct.DoesNotExist:
+            return Response(
+                {'error': 'Favorite product not found'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
