@@ -424,6 +424,33 @@ class Products(ViewSet):
             status=status.HTTP_201_CREATED,
         )
 
+    @action(detail=True, methods=["post"], url_path="like", url_name="like")
+    def like_product(self, request, pk=None):
+        try:
+            # Fetch the product using pk (primary key)
+            product = Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            return Response(
+                {"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Check if the user has already liked this product
+        favorite = FavoriteProduct.objects.filter(
+            user=request.user, product=product
+        ).first()
+
+        if favorite:
+            # If the product is already liked, provide an option to unlike
+            return Response(
+                {"status": "Product already liked", "favorite_id": favorite.id},
+                status=status.HTTP_200_OK,
+            )
+
+        # Create a new favorite entry if not already liked
+        favorite = FavoriteProduct.objects.create(user=request.user, product=product)
+
+        return Response({}, status=status.HTTP_201_CREATED)
+
     @action(detail=False, methods=["get"], url_path="liked", url_name="liked")
     def list_favorites(self, request):
         user = request.user.id
