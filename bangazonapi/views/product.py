@@ -330,8 +330,14 @@ class Products(ViewSet):
         if quantity:
             products = products.filter(quantity__gte=quantity)
 
-        if number_sold:
-            products = products.filter(number_sold__gte=number_sold)
+        number_sold = int(request.query_params.get("number_sold", 0))
+        if number_sold is not None:
+            products = products.annotate(
+                sold_count=Count(
+                    "lineitems",
+                    filter=Q(lineitems__order__payment_type__isnull=False),
+                )
+            ).filter(sold_count__gte=number_sold)
 
         if location:
             products = products.filter(location__icontains=location)
