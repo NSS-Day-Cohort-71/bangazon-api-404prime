@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Favorite Sellers Report</h1>
+    
+    {% if customer_name and favorite_sellers %}
+        <h2>Customer: {{ customer_name }}</h2>
+        <h3>Favorite Sellers:</h3>
+        <ul>
+            {% for seller in favorite_sellers %}
+                <li>{{ seller.name }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No favorite sellers found for this customer.</p>
+    {% endif %}
+{% endblock %}

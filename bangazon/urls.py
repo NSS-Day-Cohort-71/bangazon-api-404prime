@@ -43,14 +43,19 @@ urlpatterns = [
                     name="expensive_products",
                 ),
                 path(
-                    'completed_orders',
+                    "completed_orders",
                     reports.completed_orders_report,
-                    name='completed_orders',
+                    name="completed_orders",
                 ),
                 path(
-                    'inexpensive_products',
+                    "inexpensive_products",
                     reports.inexpensive_products_report,
-                    name='inexpensive_products',
+                    name="inexpensive_products",
+                ),
+                path(
+                    "favoritesellers",
+                    reports.favorite_sellers_report,
+                    name="favoritesellers",
                 ),
                 # Add more report URLs here as needed
             ]

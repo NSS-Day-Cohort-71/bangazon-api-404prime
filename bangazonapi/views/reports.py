@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from bangazonapi.models import Order, Product
+from bangazonapi.models import Order, Product, Favorite
 from django.db import connection
 
 
@@ -42,10 +42,10 @@ def incomplete_orders_report(request):
 
 
 def completed_orders_report(request):
-    status = request.GET.get('status', None)
-    if status != 'complete':
+    status = request.GET.get("status", None)
+    if status != "complete":
         return render(
-            request, 'reports/orders/completed_orders.html', {'orders_data': []}
+            request, "reports/orders/completed_orders.html", {"orders_data": []}
         )
 
     orders = Order.objects.filter(
@@ -60,20 +60,20 @@ def completed_orders_report(request):
 
         orders_data.append(
             {
-                'order_id': order.id,
-                'customer_name': customer_name,
-                'total_cost': total_cost,
-                'payment_type': {
-                    'merchant_name': order.payment_type.merchant_name,
-                    'account_number': order.payment_type.account_number,
-                    'expiration_date': order.payment_type.expiration_date,
+                "order_id": order.id,
+                "customer_name": customer_name,
+                "total_cost": total_cost,
+                "payment_type": {
+                    "merchant_name": order.payment_type.merchant_name,
+                    "account_number": order.payment_type.account_number,
+                    "expiration_date": order.payment_type.expiration_date,
                 },
             }
         )
     return render(
         request,
-        'reports/orders/completed_orders.html',
-        {'orders_data': orders_data},
+        "reports/orders/completed_orders.html",
+        {"orders_data": orders_data},
     )
 
 
@@ -96,6 +96,7 @@ def expensive_products_report(request):
         {"products_data": products_data},
     )
 
+
 def inexpensive_products_report(request):
     # "lte" = less than or equal to
     inexpensive_products = Product.objects.filter(price__lte=999)
@@ -111,3 +112,35 @@ def inexpensive_products_report(request):
         "reports/products/inexpensive_products.html",
         {"products_data": products_data},
     )
+
+
+def favorite_sellers_report(request):
+    customer_id = request.GET.get("customer")
+
+    if not customer_id:
+        return render(request, "reports/favorite_sellers.html", {})
+
+    try:
+        customer_id = int(customer_id)
+    except ValueError:
+        return render(request, "reports/favorite_sellers.html", {})
+
+    favorites = Favorite.objects.filter(customer_id=customer_id)
+
+    if not favorites:
+        return render(request, "reports/favorite_sellers.html", {})
+
+    customer_name = favorites[0].customer.user.username
+    favorite_sellers = [
+        {
+            "name": favorite.seller.user.username,
+        }
+        for favorite in favorites
+    ]
+
+    context = {
+        "customer_name": customer_name,
+        "favorite_sellers": favorite_sellers,
+    }
+
+    return render(request, "reports/favorite_sellers.html", context)
